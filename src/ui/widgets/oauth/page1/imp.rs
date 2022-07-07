@@ -2,16 +2,14 @@ use gtk4 as gtk;
 use gtk::subclass::prelude::*;
 use gtk::subclass::window::WindowImpl;
 use gtk::prelude::*;
-use gtk::{glib, CompositeTemplate, Label, Box, Entry};
+use gtk::{glib, CompositeTemplate, Box, Entry};
 use glib::subclass::InitializingObject;
 
 #[derive(Debug, Default, CompositeTemplate)]
-#[template(file = "page1.ui")]
+#[template(file = "./oauthAssistantPage1.ui")]
 pub struct OauthAssistantPage1 {
     #[template_child]
     pub instance_uri_text_entry: TemplateChild<Entry>,
-    #[template_child]
-    pub instance_uri_label: TemplateChild<Label>,
 }
 
 #[glib::object_subclass]

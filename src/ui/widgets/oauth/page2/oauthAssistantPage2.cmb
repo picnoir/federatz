@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<!DOCTYPE cambalache-project SYSTEM "cambalache-project.dtd">
+<cambalache-project version="0.10.2" target_tk="gtk-4.0">
+  <ui>
+	(1,10,"page1.ui","oauthAssistantPage2.ui",None,None,None,None,None,None)
+  </ui>
+  <object>
+	(1,10,"GtkBox","oauthAssistantPage2",None,None,None,None,None),
+	(1,11,"GtkLabel",None,10,None,None,None,None),
+	(1,12,"GtkBox",None,10,None,None,None,1),
+	(1,13,"GtkLabel",None,12,None,None,None,None),
+	(1,14,"GtkLabel",None,12,None,None,None,1),
+	(1,15,"GtkBox",None,12,None,None,None,3),
+	(1,16,"GtkLabel",None,15,None,None,None,None),
+	(1,17,"GtkEntry","authorization_token_entry",15,None,None,None,1),
+	(1,18,"GtkLabel","authorization_link_label",12,None,None,None,2)
+  </object>
+  <object_property>
+	(1,10,"GtkBox","spacing","12",None,None,None,None,None),
+	(1,10,"GtkOrientable","orientation","vertical",None,None,None,None,None),
+	(1,10,"GtkWidget","halign","center",None,None,None,None,None),
+	(1,10,"GtkWidget","margin-bottom","12",None,None,None,None,None),
+	(1,10,"GtkWidget","margin-end","12",None,None,None,None,None),
+	(1,10,"GtkWidget","margin-start","12",None,None,None,None,None),
+	(1,10,"GtkWidget","margin-top","12",None,None,None,None,None),
+	(1,10,"GtkWidget","valign","center",None,None,None,None,None),
+	(1,11,"GtkLabel","justify","center",None,None,None,None,None),
+	(1,11,"GtkLabel","label","&lt;b&gt;Generate Auth Token&lt;/b&gt;",None,None,None,None,None),
+	(1,11,"GtkLabel","use-markup","True",None,None,None,None,None),
+	(1,12,"GtkBox","spacing","12",None,None,None,None,None),
+	(1,12,"GtkOrientable","orientation","vertical",None,None,None,None,None),
+	(1,12,"GtkWidget","halign","center",None,None,None,None,None),
+	(1,13,"GtkLabel","label","We need an authorization token to connect to your fediverse account.",None,None,None,None,None),
+	(1,13,"GtkLabel","natural-wrap-mode","word",None,None,None,None,None),
+	(1,13,"GtkLabel","wrap","True",None,None,None,None,None),
+	(1,14,"GtkLabel","label","The following link will redirect you to your instance login page. Please login then copy paste the generated authorization token to the text box below.",None,None,None,None,None),
+	(1,15,"GtkBox","spacing","12",None,None,None,None,None),
+	(1,15,"GtkWidget","halign","center",None,None,None,None,None),
+	(1,15,"GtkWidget","valign","center",None,None,None,None,None),
+	(1,16,"GtkLabel","label","Authorization Token:",None,None,None,None,None),
+	(1,18,"GtkLabel","label","&lt;a href=\"http://alternativebit.fr\" title=\"Generate \"&gt;Click here to generate the authorization Token&lt;/a&gt;",None,None,None,None,None),
+	(1,18,"GtkLabel","use-markup","True",None,None,None,None,None),
+	(1,18,"GtkLabel","use-underline","True",None,None,None,None,None)
+  </object_property>
+</cambalache-project>

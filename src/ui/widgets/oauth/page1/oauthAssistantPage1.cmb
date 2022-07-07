@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<!DOCTYPE cambalache-project SYSTEM "cambalache-project.dtd">
+<cambalache-project version="0.10.2" target_tk="gtk-4.0">
+  <ui>
+	(1,1,"page1.ui","oauthAssistantPage1.ui",None,None,None,None,None,None)
+  </ui>
+  <object>
+	(1,1,"GtkBox","oauthAssistantPage1",None,None,None,None,None),
+	(1,6,"GtkBox",None,1,None,None,None,1),
+	(1,7,"GtkLabel",None,6,None,None,None,None),
+	(1,8,"GtkEntry","instance_uri_text_entry",6,None,None,None,1),
+	(1,9,"GtkLabel",None,1,None,None,None,None)
+  </object>
+  <object_property>
+	(1,1,"GtkBox","spacing","12",None,None,None,None,None),
+	(1,1,"GtkOrientable","orientation","vertical",None,None,None,None,None),
+	(1,1,"GtkWidget","halign","center",None,None,None,None,None),
+	(1,1,"GtkWidget","margin-bottom","12",None,None,None,None,None),
+	(1,1,"GtkWidget","margin-end","12",None,None,None,None,None),
+	(1,1,"GtkWidget","margin-start","12",None,None,None,None,None),
+	(1,1,"GtkWidget","margin-top","12",None,None,None,None,None),
+	(1,1,"GtkWidget","valign","center",None,None,None,None,None),
+	(1,6,"GtkBox","spacing","12",None,None,None,None,None),
+	(1,6,"GtkWidget","halign","center",None,None,None,None,None),
+	(1,7,"GtkLabel","label","Instance Address:",None,None,None,None,None),
+	(1,8,"GtkEntry","placeholder-text","mastodon.social",None,None,None,None,None),
+	(1,9,"GtkLabel","justify","center",None,None,None,None,None),
+	(1,9,"GtkLabel","label","&lt;b&gt;Instance Setup&lt;/b&gt;",None,None,None,None,None),
+	(1,9,"GtkLabel","use-markup","True",None,None,None,None,None)
+  </object_property>
+</cambalache-project>

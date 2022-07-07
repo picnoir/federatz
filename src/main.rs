@@ -1,9 +1,6 @@
 use gtk4 as gtk;
 use gtk::prelude::*;
-use gtk::{Application, ApplicationWindow, Button, Box, Orientation};
-
-use std::cell::RefCell;
-use std::rc::Rc;
+use gtk::Application;
 
 mod oauth;
 mod ui;

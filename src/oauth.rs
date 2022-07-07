@@ -11,11 +11,9 @@ pub struct RegisteredApp {
     pub website: Option<String>
 }
 
-#[derive(Debug)]
 pub enum RequestError {
     HttpError(u16, String),
     JsonError(Error)
-
 }
 
 pub fn register_app(instance_fqdn: &str, app_name: &str) -> Result<RegisteredApp, RequestError> {
