@@ -4,7 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+dirs = "*"
 gtk4 = "*"
+glib = "*"
+rusqlite = "*"
+rusqlite_migration = "*"
 serde = {version = "*", features = ["derive"]}
 serde_json = "*"
+serde_rusqlite = "*"
 ureq = {version = "*", features = ["json", "native-certs", "gzip"]}
