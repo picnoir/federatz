@@ -21,6 +21,7 @@
     </child>
     <child>
       <object class="GtkBox">
+        <property name="accessible-role">form</property>
         <property name="halign">center</property>
         <property name="spacing">12</property>
         <child>

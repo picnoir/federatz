@@ -1,14 +1,20 @@
 use gtk4 as gtk;
+use glib;
+use gtk::prelude::*;
+use gtk::subclass::prelude::*;
 
 mod page1;
 mod page2;
 mod page3;
+
+use crate::oauth;
 
 pub fn create_oauth_assistant(app: &gtk::Application) -> gtk::Assistant {
     let assistant = gtk::Assistant::builder()
         .application(app)
         .title("Authenticate on your home instance")
         .build();
+
     let page1 = page1::OauthAssistantPage1::new();
     assistant.append_page(&page1);
     assistant.set_page_type(&page1, gtk::AssistantPageType::Intro);
@@ -21,7 +27,23 @@ pub fn create_oauth_assistant(app: &gtk::Application) -> gtk::Assistant {
     assistant.append_page(&page3);
     assistant.set_page_type(&page3, gtk::AssistantPageType::Summary);
 
-    assistant.set_page_complete(&page1, true);
+    page1.imp().instance_uri_text_entry.connect_activate(glib::clone!(@weak assistant, @weak page1, @weak page2 => move |_| {
+        let instance_uri = page1.imp().instance_uri_text_entry.buffer().text();
+        let ores = oauth::register_app(&instance_uri, "federatz-0.1");
+        match ores {
+            Ok(res) => {
+                println!("{:?}", res);
+                assistant.set_page_complete(&page1, true);
+                assistant.next_page();
+                let auth_link = oauth::gen_authorize_url(&instance_uri, &res);
+                let pango_link =
+                    format!(r#"<a href="{}" title="Generate Token">Click here to generate the authorization Token</a>"#, glib::markup_escape_text(&auth_link));
+                page2.imp().authorization_link_label.set_markup(&pango_link);
+            },
+            // TODO: read more about Rust error handling, refine error type.
+            Err(err) => println!("Error: {:?}", err),
+        }
+    }));
 
     assistant
 }

@@ -11,6 +11,7 @@ pub struct RegisteredApp {
     pub website: Option<String>
 }
 
+#[derive(Debug)]
 pub enum RequestError {
     HttpError(u16, String),
     JsonError(Error)

@@ -20,6 +20,7 @@
 	(1,1,"GtkWidget","margin-start","12",None,None,None,None,None),
 	(1,1,"GtkWidget","margin-top","12",None,None,None,None,None),
 	(1,1,"GtkWidget","valign","center",None,None,None,None,None),
+	(1,6,"GtkAccessible","accessible-role","form",None,None,None,None,None),
 	(1,6,"GtkBox","spacing","12",None,None,None,None,None),
 	(1,6,"GtkWidget","halign","center",None,None,None,None,None),
 	(1,7,"GtkLabel","label","Instance Address:",None,None,None,None,None),
