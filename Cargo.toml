@@ -11,5 +11,4 @@ rusqlite = "*"
 rusqlite_migration = "*"
 serde = {version = "*", features = ["derive"]}
 serde_json = "*"
-serde_rusqlite = "*"
 ureq = {version = "*", features = ["json", "native-certs", "gzip"]}

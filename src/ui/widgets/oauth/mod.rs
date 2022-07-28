@@ -7,7 +7,7 @@ mod page1;
 mod page2;
 mod page3;
 
-use crate::oauth;
+use crate::mastodon::{accounts, oauth};
 
 pub fn create_oauth_assistant(app: &gtk::Application) -> gtk::Assistant {
     let assistant = gtk::Assistant::builder()
@@ -32,7 +32,6 @@ pub fn create_oauth_assistant(app: &gtk::Application) -> gtk::Assistant {
         let ores = oauth::register_app(&instance_uri, "federatz-0.1");
         match ores {
             Ok(res) => {
-                println!("{:?}", res);
                 assistant.set_page_complete(&page1, true);
                 assistant.next_page();
                 let auth_link = oauth::gen_authorize_url(&instance_uri, &res);
@@ -44,6 +43,21 @@ pub fn create_oauth_assistant(app: &gtk::Application) -> gtk::Assistant {
             Err(err) => println!("Error: {:?}", err),
         }
     }));
+
+    page2.imp().authorization_token_entry.connect_activate(
+        glib::clone!(@weak page2, @weak page1, @weak assistant => move |_| {
+            let instance_uri = page1.imp().instance_uri_text_entry.buffer().text();
+            let authorization_token = page2.imp().authorization_token_entry.buffer().text();
+            match accounts::verify_credentials(&instance_uri, &authorization_token) {
+                Ok(res) => {
+                    assistant.set_page_complete(&page2, true);
+                    assistant.next_page();
+                    // TODO: save to DB
+                },
+                Err(err) => println!("Error: {:?}", err),
+
+            }
+        }));
 
     assistant
 }

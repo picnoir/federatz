@@ -2,7 +2,7 @@ use gtk4 as gtk;
 use gtk::subclass::prelude::*;
 use gtk::subclass::window::WindowImpl;
 use gtk::prelude::*;
-use gtk::{glib, CompositeTemplate, Box, Label};
+use gtk::{glib, CompositeTemplate, Box, Label, Entry};
 use glib::subclass::InitializingObject;
 
 #[derive(Debug, Default, CompositeTemplate)]
@@ -10,6 +10,8 @@ use glib::subclass::InitializingObject;
 pub struct OauthAssistantPage2 {
     #[template_child]
     pub authorization_link_label: TemplateChild<Label>,
+    #[template_child]
+    pub authorization_token_entry: TemplateChild<Entry>,
 }
 
 #[glib::object_subclass]
