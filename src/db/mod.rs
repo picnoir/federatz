@@ -3,8 +3,8 @@ use std::path::PathBuf;
 use rusqlite::{Connection, named_params};
 use rusqlite_migration::{Migrations, M};
 
-use crate::mastodon::oauth::RegisteredApp;
-use crate::mastodon::accounts::UserAccount;
+use crate::mastodon::oauth::{RegisteredApp, RegisteredAppWithInstanceFqdn, AuthToken};
+use crate::mastodon::accounts::{UserAccount, UserAccountWithToken};
 
 #[derive(Debug)]
 pub enum OpenDbError {
@@ -35,7 +35,6 @@ pub fn run_migrations(conn: &mut Connection) -> Result<(), rusqlite_migration::E
                 );
                 CREATE TABLE local_user(
                      id INTEGER,
-                     token TEXT NOT NULL,
                      username TEXT NOT NULL,
                      display_name TEXT NOT NULL,
                      locked BOOLEAN NOT NULL,
@@ -50,9 +49,18 @@ pub fn run_migrations(conn: &mut Connection) -> Result<(), rusqlite_migration::E
                      followers_count INTEGER NOT NULL,
                      following_count INTEGER NOT NULL,
                      statuses_count INTEGER NOT NULL,
+                     token_access_token TEXT NOT NULL,
+                     token_created_at INTEGER NOT NULL,
+                     token_expires_in INTEGER NOT NULL,
+                     token_id INTEGER NOT NULL,
+                     token_me TEXT NOT NULL,
+                     token_refresh_token TEXT NOT NULL,
+                     token_scope TEXT NOT NULL,
+                     token_token_type TEXT NOT NULL,
                      client INTEGER,
                      FOREIGN KEY(client) REFERENCES oauth_client(id)
                 );
+
             "#)
     ]);
     migrations.to_latest(conn)
@@ -69,7 +77,7 @@ impl From<rusqlite::Error> for OauthClientDatabaseError {
         OauthClientDatabaseError::RusqliteError(error)
     }
 }
-pub fn new_oauth_client(conn: &Connection, client: &RegisteredApp) -> Result<i64,rusqlite::Error> {
+pub fn new_oauth_client(conn: &Connection, client: &RegisteredAppWithInstanceFqdn) -> Result<i64,rusqlite::Error> {
     let mut stmt =
         conn.prepare(r#"
             INSERT INTO oauth_client
@@ -79,16 +87,16 @@ pub fn new_oauth_client(conn: &Connection, client: &RegisteredApp) -> Result<i64
     stmt.insert(
         named_params! {
             ":instance_fqdn": client.instance_fqdn,
-            ":client_id": client.client_id,
-            ":client_secret": client.client_secret,
-            ":name": client.name,
-            ":redirect_uri": client.redirect_uri,
-            ":website": client.website,
+            ":client_id": client.registered_app.client_id,
+            ":client_secret": client.registered_app.client_secret,
+            ":name": client.registered_app.name,
+            ":redirect_uri": client.registered_app.redirect_uri,
+            ":website": client.registered_app.website,
         }
     )
 }
 
-pub fn delete_oauth_client(conn: &Connection, client: &RegisteredApp) -> Result<usize,rusqlite::Error> {
+pub fn delete_oauth_client(conn: &Connection, client: &RegisteredAppWithInstanceFqdn) -> Result<usize,rusqlite::Error> {
     let mut stmt =
         conn.prepare(r#"
             DELETE FROM oauth_client
@@ -96,30 +104,34 @@ pub fn delete_oauth_client(conn: &Connection, client: &RegisteredApp) -> Result<
         )?;
     stmt.execute(
         named_params! {
-            ":client_id": client.client_id,
-            ":client_secret": client.client_secret
+            ":client_id": client.registered_app.client_id,
+            ":client_secret": client.registered_app.client_secret
         }
     )
 }
 
-pub fn get_oauth_client(conn: &Connection, client_id: &str) -> Result<(RegisteredApp, i64), OauthClientDatabaseError> {
+pub fn get_oauth_client(conn: &Connection, instance_fqdn: &str) -> Result<(RegisteredAppWithInstanceFqdn, i64), OauthClientDatabaseError> {
     let mut stmt =
         conn.prepare(
             r#"SELECT ROWID, instance_fqdn, client_id, client_secret, name, redirect_uri, website
                 FROM oauth_client
-                WHERE client_id = :client_id"#)?;
+                WHERE instance_fqdn = :instance_fqdn"#)?;
     let mut rows = stmt.query_and_then(
         named_params! {
-            ":client_id": client_id
+            ":instance_fqdn": instance_fqdn
         },
-        |row| Ok((RegisteredApp {
-            instance_fqdn: row.get("instance_fqdn")?,
-            client_id: row.get("client_id")?,
-            client_secret: row.get("client_secret")?,
-            name: row.get("name")?,
-            redirect_uri: row.get("redirect_uri")?,
-            website: row.get("website")?,
-        }, row.get("ROWID")?)))?;
+        |row| {
+            let registered_app = RegisteredApp {
+                client_id: row.get("client_id")?,
+                client_secret: row.get("client_secret")?,
+                name: row.get("name")?,
+                redirect_uri: row.get("redirect_uri")?,
+                website: row.get("website")?,
+            };
+            Ok((RegisteredAppWithInstanceFqdn {
+                instance_fqdn: row.get("instance_fqdn")?,
+                registered_app
+            }, row.get("ROWID")?))})?;
     rows.next().ok_or(OauthClientDatabaseError::NoClient)?
 }
 
@@ -155,66 +167,89 @@ impl From<OauthClientDatabaseError> for NewLocalUserDatabaseError {
 }
 
 /// Creates a new user account and returns its Sqlite ROWID.
-pub fn new_local_user(conn: &Connection, user: &UserAccount, client: &RegisteredApp) -> Result<i64, NewLocalUserDatabaseError> {
+pub fn new_local_user(conn: &Connection, user: &UserAccountWithToken, client: &RegisteredAppWithInstanceFqdn) -> Result<i64, NewLocalUserDatabaseError> {
     let mut stmt =
         conn.prepare(r#"
-            INSERT INTO local_user (id, token, username, display_name, locked, bot, created_at, note, url, avatar,
-                                    avatar_static, header, header_static, followers_count, following_count,
-                                    statuses_count, client)
-            VALUES (:id, :token, :username, :display_name, :locked, :bot, :created_at, :note, :url, :avatar,
-                    :avatar_static, :header, :header_static, :followers_count, :following_count,
-                    :statuses_count, :client)"#
-        )?;
-    let client = get_oauth_client(&conn, &client.client_id)?;
+            INSERT INTO local_user (id, username, display_name, locked, bot, created_at, note, url, avatar,
+                                    avatar_static, header, header_static, followers_count, following_count, statuses_count,
+                                    token_access_token, token_created_at, token_expires_in, token_id, token_me, token_refresh_token,
+                                    token_scope, token_token_type, client)
+            VALUES (:id, :username, :display_name, :locked, :bot, :created_at, :note, :url, :avatar,
+                    :avatar_static, :header, :header_static, :followers_count, :following_count, :statuses_count,
+                    :token_access_token, :token_created_at, :token_expires_in, :token_id, :token_me, :token_refresh_token,
+                    :token_scope, :token_token_type, :client)"#)?;
+    let client = get_oauth_client(&conn, &client.instance_fqdn)?;
     let new_user = stmt.insert(
         named_params! {
-            ":id": user.id,
-            ":token": user.token,
-            ":username": user.username,
-            ":display_name": user.display_name,
-            ":locked": user.locked,
-            ":bot": user.bot,
-            ":created_at": user.created_at,
-            ":note": user.note,
-            ":url": user.url,
-            ":avatar": user.avatar,
-            ":avatar_static": user.avatar_static,
-            ":header": user.header,
-            ":header_static": user.header_static,
-            ":followers_count": user.followers_count,
-            ":following_count": user.following_count,
-            ":statuses_count": user.statuses_count,
-        }
-    )?;
+            ":id": user.user_account.id,
+            ":username": user.user_account.username,
+            ":display_name": user.user_account.display_name,
+            ":locked": user.user_account.locked,
+            ":bot": user.user_account.bot,
+            ":created_at": user.user_account.created_at,
+            ":note": user.user_account.note,
+            ":url": user.user_account.url,
+            ":avatar": user.user_account.avatar,
+            ":avatar_static": user.user_account.avatar_static,
+            ":header": user.user_account.header,
+            ":header_static": user.user_account.header_static,
+            ":followers_count": user.user_account.followers_count,
+            ":following_count": user.user_account.following_count,
+            ":statuses_count": user.user_account.statuses_count,
+            ":token_access_token": user.token.access_token,
+            ":token_created_at": user.token.created_at,
+            ":token_expires_in": user.token.expires_in,
+            ":token_id": user.token.id,
+            ":token_me": user.token.me,
+            ":token_refresh_token": user.token.refresh_token,
+            ":token_scope": user.token.scope,
+            ":token_token_type": user.token.token_type,
+            ":client": client.1})?;
     Ok(new_user)
 }
 
-pub fn get_local_user(conn: &Connection) -> Result<UserAccount, GetLocalUserDatabaseError> {
+pub fn get_local_user(conn: &Connection) -> Result<UserAccountWithToken, GetLocalUserDatabaseError> {
     let mut stmt =
         conn.prepare(r#"
-            SELECT CAST(id AS TEXT) as id, token, username, display_name, locked, bot, created_at, note, url, avatar,
+            SELECT CAST(id AS TEXT) as id, username, display_name, locked, bot, created_at, note, url, avatar,
                    avatar_static, header, header_static, followers_count, following_count,
-                   statuses_count FROM local_user"#).map_err(|err| GetLocalUserDatabaseError::RusqliteError(err))?;
+                   statuses_count, token_access_token, token_created_at, token_expires_in, token_id, token_me, token_refresh_token, token_scope, token_token_type FROM local_user"#).map_err(|err| GetLocalUserDatabaseError::RusqliteError(err))?;
     let mut rows = stmt.query_and_then(
         [],
-        |row| Ok(UserAccount {
-            id: row.get("id")?,
-            token: row.get("token")?,
-            username: row.get("username")?,
-            display_name: row.get("display_name")?,
-            locked: row.get("locked")?,
-            bot: row.get("bot")?,
-            created_at: row.get("created_at")?,
-            note: row.get("note")?,
-            url: row.get("url")?,
-            avatar: row.get("avatar")?,
-            avatar_static: row.get("avatar_static")?,
-            header: row.get("header")?,
-            header_static: row.get("header_static")?,
-            followers_count: row.get("followers_count")?,
-            following_count: row.get("following_count")?,
-            statuses_count: row.get("statuses_count")?,
-        })).map_err(|err| GetLocalUserDatabaseError::RusqliteError(err))?;
+        |row| {
+            let user_account =  UserAccount {
+                id: row.get("id")?,
+                username: row.get("username")?,
+                display_name: row.get("display_name")?,
+                locked: row.get("locked")?,
+                bot: row.get("bot")?,
+                created_at: row.get("created_at")?,
+                note: row.get("note")?,
+                url: row.get("url")?,
+                avatar: row.get("avatar")?,
+                avatar_static: row.get("avatar_static")?,
+                header: row.get("header")?,
+                header_static: row.get("header_static")?,
+                followers_count: row.get("followers_count")?,
+                following_count: row.get("following_count")?,
+                statuses_count: row.get("statuses_count")?,
+            };
+            let token = AuthToken {
+                access_token: row.get("token_access_token")?,
+                created_at: row.get("token_created_at")?,
+                expires_in: row.get("token_expires_in")?,
+                id: row.get("token_id")?,
+                me: row.get("token_me")?,
+                refresh_token: row.get("token_refresh_token")?,
+                scope: row.get("token_scope")?,
+                token_type: row.get("token_token_type")?
+            };
+            Ok(UserAccountWithToken {
+                token,
+                user_account
+            })}).map_err(|err| GetLocalUserDatabaseError::RusqliteError(err))?;
+
+
     let user = rows.next().ok_or(GetLocalUserDatabaseError::NoUser)?;
     if rows.next().is_none() {
         user
@@ -231,23 +266,25 @@ pub fn delete_local_user(conn: &Connection, user: &UserAccount) -> Result<usize,
 
 #[cfg(test)]
 mod test {
-    use crate::db::{UserAccount, RegisteredApp};
+    use crate::db::{UserAccount, UserAccountWithToken, RegisteredApp, RegisteredAppWithInstanceFqdn, AuthToken};
 
-    fn dummy_client () -> RegisteredApp {
-        RegisteredApp {
-            instance_fqdn: String::from("dummy.instance"),
+    fn dummy_client () -> RegisteredAppWithInstanceFqdn {
+        let registered_app = RegisteredApp {
             client_id: String::from("dummy-client-id"),
             client_secret: String::from("dummy-client-secret"),
             name: String::from("dummy-name"),
             redirect_uri: String::from("dummy-redirect-uri"),
             website: None,
+        };
+        RegisteredAppWithInstanceFqdn {
+            registered_app,
+            instance_fqdn: String::from("dummy.instance"),
         }
     }
 
-    fn dummy_local_user (id: &str) -> UserAccount {
-        UserAccount {
+    fn dummy_local_user (id: &str) -> UserAccountWithToken {
+        let user_account = UserAccount {
             id: String::from(id),
-            token: String::from("dummy-token"),
             username: String::from(format!("Ninjatrappeur{}", id)),
             display_name: String::from("⠴Ninjatrappeur⠦"),
             locked: false,
@@ -262,6 +299,20 @@ mod test {
             followers_count: 615,
             following_count: 191,
             statuses_count: 1297,
+        };
+        let token = AuthToken {
+            access_token: "dummy-access-token".to_string(),
+            created_at: 42,
+            expires_in: 43,
+            id: 44,
+            me: "mario".to_string(),
+            refresh_token: "refresh token".to_string(),
+            scope: "read write push".to_string(),
+            token_type: "Bearer".to_string(),
+        };
+        UserAccountWithToken {
+            token,
+            user_account
         }
     }
 
@@ -283,7 +334,7 @@ mod test {
         let conn = setup_temp_db();
         let dummy_client = dummy_client();
         super::new_oauth_client(&conn, &dummy_client).unwrap();
-        assert_eq!(super::get_oauth_client(&conn, &dummy_client.client_id).unwrap().0, dummy_client);
+        assert_eq!(super::get_oauth_client(&conn, &dummy_client.instance_fqdn).unwrap().0, dummy_client);
     }
 
     #[test]

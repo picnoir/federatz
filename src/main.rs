@@ -2,18 +2,19 @@ use gtk4 as gtk;
 use gtk::prelude::*;
 use gtk::Application;
 
+mod db;
 mod mastodon;
 mod ui;
-mod db;
 
 use ui::widgets::oauth::create_oauth_assistant;
 
 fn main() {
-    let conn = db::open_db();
-    match conn  {
-        Ok(mut conn) => db::run_migrations(&mut conn),
-        Err(e) => panic!("Error when running the DB migrations: {:?}", e),
-    };
+    {
+        match db::open_db() {
+            Ok(mut db_conn) => db::run_migrations(&mut db_conn),
+            Err(e) => panic!("Error when running the DB migrations: {:?}", e),
+        };
+    }
     let app = Application::builder()
         .application_id("fr.alternativebit.federatz")
         .build();
