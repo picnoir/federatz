@@ -7,6 +7,7 @@ mod mastodon;
 mod ui;
 
 use ui::widgets::oauth::create_oauth_assistant;
+use ui::widgets::main_window::MainWindow;
 
 fn main() {
     {
@@ -23,6 +24,6 @@ fn main() {
 }
 
 fn build_ui(app: &Application) {
-    let oauth_assistant = create_oauth_assistant(app);
-    oauth_assistant.present();
+    let mainWindow = MainWindow::new(app);
+    mainWindow.present();
 }

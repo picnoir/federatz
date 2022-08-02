@@ -10,10 +10,9 @@ mod page3;
 use crate::mastodon::{accounts, oauth};
 use crate::db;
 
-pub fn create_oauth_assistant(app: &gtk::Application) -> gtk::Assistant {
+pub fn create_oauth_assistant() -> gtk::Assistant {
 
     let assistant = gtk::Assistant::builder()
-        .application(app)
         .title("Authenticate on your home instance")
         .build();
 
