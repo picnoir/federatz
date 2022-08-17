@@ -80,7 +80,7 @@ pub fn generate_token(app: &RegisteredAppWithInstanceFqdn, auth_code: &str) -> R
 mod test {
     use crate::mastodon::oauth::{RegisteredApp, AuthToken, register_app, generate_token};
 
-    static pleroma_register_app_json_fixture: &'static str = r#"
+    static PLEROMA_REGISTER_APP_JSON_FIXTURE: &'static str = r#"
 {
     "client_id": "yUy22iiE1Ql1RYw3GFSX-pCyp4zn4pt3f5KVO4l8O3c",
     "client_secret": "NT_ypYpC25xhPKQYIzgBzoEpqRRBTwQHUyYYzJbz2BE",
@@ -90,7 +90,7 @@ mod test {
     "website": null
 }"#;
 
-    static pleroma_generate_token_json_fixture: &'static str = r#"
+    static PLEROMA_GENERATE_TOKEN_JSON_FIXTURE: &'static str = r#"
 {
     "access_token": "8YA7xlkn9auNTeCZl9Z7lvfnDOEZu4VcatT1p1plqms",
     "created_at": 1656412658,
@@ -127,13 +127,13 @@ mod test {
 
     #[test]
     fn test_parse_pleroma_app () {
-        let got: RegisteredApp = serde_json::from_str(&pleroma_register_app_json_fixture).unwrap();
+        let got: RegisteredApp = serde_json::from_str(&PLEROMA_REGISTER_APP_JSON_FIXTURE).unwrap();
         assert_eq!(got, expected_app());
     }
 
     #[test]
     fn test_parse_pleroma_token () {
-        let got: AuthToken = serde_json::from_str(&pleroma_generate_token_json_fixture).unwrap();
+        let got: AuthToken = serde_json::from_str(&PLEROMA_GENERATE_TOKEN_JSON_FIXTURE).unwrap();
         assert_eq!(got, expected_token());
     }
 

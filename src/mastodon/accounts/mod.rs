@@ -60,7 +60,7 @@ pub fn deserialize_user_account_str(serialized_user_account_without_token: &str,
 mod test {
     use crate::mastodon::accounts::{UserAccount, verify_credentials};
 
-    static pleroma_json_fixture: &'static str = r#"
+    static PLEROMA_JSON_FIXTURE: &'static str = r#"
 {
     "acct": "Ninjatrappeur",
     "avatar": "https://social.alternativebit.fr/media/3f9ad2d6f473c954506f404de5a3636905035f32ec9f1f07deca0a72e88ac3e8.blob",
@@ -148,7 +148,7 @@ mod test {
 
     #[test]
     fn test_parse_pleroma_user () {
-        let got: UserAccount = serde_json::from_str(&pleroma_json_fixture).unwrap();
+        let got: UserAccount = serde_json::from_str(&PLEROMA_JSON_FIXTURE).unwrap();
         assert_eq!(got, expected_account());
     }
 }
