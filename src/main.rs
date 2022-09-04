@@ -8,6 +8,7 @@ mod ui;
 
 use ui::widgets::oauth::create_oauth_assistant;
 use ui::widgets::main_window::MainWindow;
+use ui::widgets::post::Post;
 
 fn main() {
     {
@@ -20,10 +21,11 @@ fn main() {
         .application_id("fr.alternativebit.federatz")
         .build();
     app.connect_activate(build_ui);
+
     app.run();
 }
 
 fn build_ui(app: &Application) {
-    let mainWindow = MainWindow::new(app);
-    mainWindow.present();
+    let main_window = MainWindow::new(app);
+    main_window.present();
 }

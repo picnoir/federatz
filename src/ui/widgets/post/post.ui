@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="Post" parent="GtkBox">
+    <child>
+      <object id="post_text_content" class="GtkLabel">
+        <property name="justify">left</property>
+      </object>
+    </child>
+  </template>
+</interface>

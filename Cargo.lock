@@ -164,6 +164,7 @@ dependencies = [
  "dirs",
  "glib",
  "gtk4",
+ "once_cell",
  "rusqlite",
  "rusqlite_migration",
  "serde",

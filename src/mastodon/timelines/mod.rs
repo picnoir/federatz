@@ -1,41 +1,45 @@
+use std::fs;
 use serde::Deserialize;
+
+use super::oauth::{AuthToken};
+use crate::mastodon;
 
 #[derive(PartialEq, Debug, Deserialize, Clone)]
 #[serde(transparent)]
 pub struct Timeline {
-    statuses: Vec<Status>
+    pub statuses: Vec<Status>
 }
 
 #[derive(PartialEq, Debug, Deserialize, Clone)]
 pub struct Status {
-    account: Account,
-    bookmarked: bool,
-    content: String,
-    created_at: String,
-    favourited: bool,
-    favourites_count: u64,
-    id: String,
-    in_reply_to_account_id: Option<String>,
-    in_reply_to_id: Option<String>,
-    media_attachments: Vec<MediaAttachment>,
-    mentions: Vec<Mention>,
-    muted: bool,
-    pinned: bool,
-    reblog: Option<Box<Status>>,
-    reblogged: bool,
-    reblogs_count: u64,
-    replies_count: u64,
-    sensitive: bool,
-    spoiler_text: String,
-    uri: String,
-    url: String,
-    visibility: String
+    pub account: Account,
+    pub bookmarked: bool,
+    pub content: String,
+    pub created_at: String,
+    pub favourited: bool,
+    pub favourites_count: u64,
+    pub id: String,
+    pub in_reply_to_account_id: Option<String>,
+    pub in_reply_to_id: Option<String>,
+    pub media_attachments: Vec<MediaAttachment>,
+    pub mentions: Vec<Mention>,
+    pub muted: bool,
+    pub pinned: bool,
+    pub reblog: Option<Box<Status>>,
+    pub reblogged: bool,
+    pub reblogs_count: u64,
+    pub replies_count: u64,
+    pub sensitive: bool,
+    pub spoiler_text: String,
+    pub uri: String,
+    pub url: String,
+    pub visibility: String
 }
 
 #[derive(PartialEq, Debug, Deserialize, Clone)]
 pub struct MediaAttachment {
-    blurhash: String,
-    description: String,
+    blurhash: Option<String>,
+    description: Option<String>,
     id: String,
     preview_url: String,
     remote_url: String,
@@ -76,6 +80,24 @@ pub struct Account {
 pub struct AccountField {
     name: String,
     value: String
+}
+
+pub fn get_personal_timeline(token: &AuthToken, fqdn: &str) -> Result<Timeline, mastodon::RequestError> {
+    let resp: Result<ureq::Response, ureq::Error> = ureq::get(&format!("https://{}/api/v1/timelines/home", fqdn))
+        .set("Authorization", &format!("{} {}", &token.token_type, &token.access_token))
+        .call();
+    match resp {
+        Ok(resp) => {
+//            fs::write("/tmp/masto", resp.into_string().unwrap()).unwrap();
+            let timeline: Timeline = resp.into_json().map_err(mastodon::RequestError::JsonError)?;
+            Ok(timeline)
+ //           Err(mastodon::RequestError::HttpError(0, "Transport error".to_string()))
+        }
+        Err(ureq::Error::Status(code,response)) =>
+            Err(mastodon::RequestError::HttpError(code, response.status_text().to_string())),
+        Err(_) =>
+            Err(mastodon::RequestError::HttpError(0, "Transport error".to_string()))
+    }
 }
 
 #[cfg(test)]
@@ -485,6 +507,7 @@ mod test {
             ].to_vec()
         }
     }
+
 
     #[test]
     fn test_parse_pleroma_public_timeline () {
